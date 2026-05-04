@@ -92,6 +92,11 @@ menuselect/menuselect --disable chan_sip menuselect.makeopts || warn "Module not
 log "Module configuration completed"
 
 
+# Pre-build third-party (pjproject) sequentially with verbose output.
+# This surfaces real compiler errors that would otherwise be hidden by parallel make.
+log "Building third-party dependencies (pjproject) with verbose output..."
+TMPDIR=${TMPDIR} make NOISY_BUILD=yes -j 1 third-party
+
 # Build Asterisk
 log "Building Asterisk core (this may take several minutes)..."
 TMPDIR=${TMPDIR} make -j $JOBS all

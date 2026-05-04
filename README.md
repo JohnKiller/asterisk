@@ -1,6 +1,6 @@
 # Asterisk Docker Images
 
-Production-ready Docker images for Asterisk PBX with advanced DRY template system, supporting 31 versions from 1.2.40 to 23.3.0 plus git development builds.
+Production-ready Docker images for Asterisk PBX with advanced DRY template system, supporting 30 versions from 1.2.40 to 23.3.0 plus git development builds.
 
 ## Quick Start
 
@@ -13,11 +13,11 @@ docker run --rm -p 5060:5060/udp andrius/asterisk:latest
 docker run --rm andrius/asterisk:latest asterisk -V
 
 # Use specific version for production
-docker run --rm -p 5060:5060/udp andrius/asterisk:22.5.2_debian-trixie
+docker run --rm -p 5060:5060/udp andrius/asterisk:22.8.2_debian-trixie
 
 # Or build latest stable version locally and run locally built container
-./scripts/build-asterisk.sh 22.5.2
-docker run --rm -p 5060:5060/udp 22.5.2_debian-trixie
+./scripts/build-asterisk.sh 22.8.2
+docker run --rm -p 5060:5060/udp 22.8.2_debian-trixie
 
 ```
 
@@ -88,15 +88,15 @@ The build system supports semantic Docker tags for easier version management. Th
 
 ## Docker Tags Format
 
-This project uses a dual-tagging system: **version-specific tags** in the format `{version}_{os}-{distribution}` (e.g., `22.5.2_debian-trixie`) for precise deployment, and semantic tags (e.g., `latest`, `stable`, `22`, `23-rc`, `20-cert`) for convenient version management.
+This project uses a dual-tagging system: **version-specific tags** in the format `{version}_{os}-{distribution}` (e.g., `22.8.2_debian-trixie`) for precise deployment, and semantic tags (e.g., `latest`, `stable`, `22`, `23-rc`, `20-cert`) for convenient version management.
 
 Primary tags include the full OS and distribution context, while additional semantic tags are defined per version in the build matrix using the additional_tags property. Multi-architecture builds create unified manifests under the same tag names, automatically selecting the correct architecture.
 
-For development, use semantic tags like `asterisk:latest` or `asterisk:stable`, and for production a specific tag like `asterisk:22.5.2_debian-trixie` that guarantee exact version and environment reproducibility.
+For development, use semantic tags like `asterisk:latest` or `asterisk:stable`, and for production a specific tag like `asterisk:22.8.2_debian-trixie` that guarantee exact version and environment reproducibility.
 
 ### Current Tag Meanings
 
-- **`latest`** - Points to the most current stable release (currently **22.5.2**)
+- **`latest`** - Points to the most current stable release (currently **22.8.2**)
 - **`stable`** - Alias for the latest stable production version
 - **`22`** - Major version tag for the Asterisk 22.x series
 - **`23-rc`** - Release candidate tag for Asterisk 23.x pre-releases
@@ -125,7 +125,7 @@ Additional tags are configured per version in the build matrix:
 ```yaml
 # In asterisk/supported-asterisk-builds.yml
 latest_builds:
-  - version: "22.5.2"
+  - version: "22.8.2"
     additional_tags: "latest,stable,22"
     os_matrix:
       - os: "debian"
@@ -133,7 +133,7 @@ latest_builds:
         architectures: ["amd64", "arm64"]
 ```
 
-When building, both version-specific tags (`22.5.2_debian-trixie`) and semantic tags (`latest`, `stable`, `22`) are created for the same image.
+When building, both version-specific tags (`22.8.2_debian-trixie`) and semantic tags (`latest`, `stable`, `22`) are created for the same image.
 
 ## Key Features
 
@@ -192,26 +192,26 @@ The build system automatically enforces version-specific module requirements dur
 - Automatically adds `chan_sip` to the exclude list
 - As per [official deprecation](https://www.asterisk.org/asterisk-21-module-removal/), chan_sip was removed in Asterisk 21
 - Only `chan_pjsip` is available for SIP communications
-- Example: `asterisk/21.10.2-trixie/build.sh:88` contains `menuselect --disable chan_sip`
+- Example: `asterisk/21.12.2-trixie/build.sh:88` contains `menuselect --disable chan_sip`
 
 **Asterisk 23+ and git (WebSocket requirement)**:
 
 - Automatically adds `chan_websocket` to the channels list
 - Sets `features.websockets = true` in configuration
 - Includes full WebSocket stack: `chan_websocket`, `res_http_websocket`, `res_pjsip_transport_websocket`
-- Example: `asterisk/23.0.0-rc2-trixie/build.sh:73` contains `menuselect --enable chan_websocket`
+- Example: `asterisk/23.3.0-trixie/build.sh:73` contains `menuselect --enable chan_websocket`
 
 **Asterisk 20+ (Opus codec)**:
 
 - Automatically downloads and installs Digium binary Opus codec at build time
 - Provides `codec_opus.so` (transcoding) and `format_ogg_opus.so` (OGG Opus file support)
-- x86_64/amd64 only — Digium does not provide arm64 binaries
+- x86_64/amd64 only - Digium does not provide arm64 binaries
 - arm64 images include `res_format_attr_opus.so` for Opus passthrough (no transcoding)
 - Version capped at Asterisk 23 codec URL (latest available from Digium)
 
 These overrides are applied automatically during ANY config generation:
 
-- `./scripts/regenerate-all-configs.sh` - applies to all 24 versions
+- `./scripts/regenerate-all-configs.sh` - applies to all 31 versions
 - `./scripts/build-asterisk.sh VERSION --force-config` - applies to specific version
 - Configuration happens at template merge time (before Dockerfile generation)
 
@@ -250,21 +250,21 @@ These overrides are applied automatically during ANY config generation:
 ./scripts/discover-latest-versions.sh --output-yaml --updates-only
 
 # Build specific version
-./scripts/build-asterisk.sh 22.5.2 --force-config
+./scripts/build-asterisk.sh 22.8.2 --force-config
 
 # Build with specific distribution
-./scripts/build-asterisk.sh 22.5.2 debian bookworm
+./scripts/build-asterisk.sh 22.8.2 debian bookworm
 
 # Preview build without execution
-./scripts/build-asterisk.sh 22.5.2 --dry-run
+./scripts/build-asterisk.sh 22.8.2 --dry-run
 
 # Test configurations and builds
-./scripts/test-build.sh --mode config "22.5.2"   # Fast validation
-./scripts/test-build.sh --mode build "22.5.2"    # Full Docker build
-./scripts/test-build.sh --mode validate "22.5.2" # Complete testing
+./scripts/test-build.sh --mode config "22.8.2"   # Fast validation
+./scripts/test-build.sh --mode build "22.8.2"    # Full Docker build
+./scripts/test-build.sh --mode validate "22.8.2" # Complete testing
 
 # Generate config only
-python3 scripts/generate-config.py 22.5.2 trixie
+python3 scripts/generate-config.py 22.8.2 trixie
 ```
 
 ### Template Modification
@@ -293,13 +293,13 @@ After template changes, rebuild with `--force-config`:
 
 ```bash
 # Validate configuration
-python3 scripts/generate-dockerfile.py configs/generated/asterisk-22.5.2-trixie.yml --validate
+python3 scripts/generate-dockerfile.py configs/generated/asterisk-22.8.2-trixie.yml --validate
 
 # Test health check
-docker run --rm asterisk:22.5.2_debian-trixie /usr/local/bin/healthcheck.sh --verbose
+docker run --rm asterisk:22.8.2_debian-trixie /usr/local/bin/healthcheck.sh --verbose
 
 # Run container with shell
-docker run -it --rm asterisk:22.5.2_debian-trixie /bin/bash
+docker run -it --rm asterisk:22.8.2_debian-trixie /bin/bash
 ```
 
 ## Examples

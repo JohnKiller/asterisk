@@ -108,6 +108,15 @@ make -j ${JOBS} && make install
 cd ..
 {% endif %}
 
+# Pre-build third-party (pjproject) sequentially with verbose output.
+# This surfaces real compiler errors that would otherwise be hidden by parallel make.
+log "Building third-party dependencies (pjproject) with verbose output..."
+{% if build_opt.cache_mounts | default(true) -%}
+TMPDIR=${TMPDIR} make NOISY_BUILD=yes -j 1 third-party
+{% else -%}
+make NOISY_BUILD=yes -j 1 third-party
+{% endif %}
+
 # Build Asterisk
 log "Building Asterisk core (this may take several minutes)..."
 {% if build_opt.cache_mounts | default(true) -%}
