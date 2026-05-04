@@ -120,11 +120,6 @@ RUN ./configure
 RUN make menuselect/menuselect menuselect-tree menuselect.makeopts
 {% endif %}
 
-{% if config.base.os == "debian" and not is_very_old -%}
-# Optimize build configuration for smaller image
-RUN sed -i 's/HAVE_XML2 = yes/HAVE_XML2 = no/' makeopts && \
-    sed -i 's/HAVE_XMLSTARLET = yes/HAVE_XMLSTARLET = no/' makeopts
-{% endif %}
 
 # Copy and execute build script
 COPY build.sh /usr/src/asterisk/build.sh

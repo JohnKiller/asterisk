@@ -59,9 +59,6 @@ RUN ./configure
 # Generate menuselect configuration
 RUN make menuselect/menuselect menuselect-tree menuselect.makeopts
 
-# Optimize build configuration for smaller image
-RUN sed -i 's/HAVE_XML2 = yes/HAVE_XML2 = no/' makeopts \
-    && sed -i 's/HAVE_XMLSTARLET = yes/HAVE_XMLSTARLET = no/' makeopts
 
 # Copy and execute build script
 COPY build.sh /usr/src/asterisk/build.sh

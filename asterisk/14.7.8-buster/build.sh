@@ -34,6 +34,14 @@ log "Using $JOBS parallel jobs for compilation (detected $NPROC CPUs)"
 log "Configuring Asterisk with options..."
 ./configure --with-pjproject-bundled --with-ssl=ssl --with-crypto
 
+# Workaround: Asterisk 18.x ships makeopts with a literal '\n' in DOWNLOAD
+# that dash echo interprets as a real newline, mangling
+# get_sourceable_makeopts output and breaking make_xml_documentation. Flatten
+# the line to a plain curl invocation. No-op on versions without the bug.
+if [ -f makeopts ]; then
+    sed -i 's|^DOWNLOAD=.*|DOWNLOAD=/usr/bin/curl -L -O --progress-bar|' makeopts
+fi
+
 # Build menuselect tool
 log "Building menuselect tool..."
 make menuselect
