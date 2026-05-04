@@ -329,7 +329,13 @@ try:
             for build in data['latest_builds']:
                 version_name = build.get('version', 'unknown')
                 has_matrix = 'os_matrix' in build
-                status = "buildable" if has_matrix else "skipped (no os_matrix)"
+                deprecated = bool(build.get('deprecated_at'))
+                if deprecated:
+                    status = f"deprecated (since {build.get('deprecated_at')})"
+                elif has_matrix:
+                    status = "buildable"
+                else:
+                    status = "skipped (no os_matrix)"
                 print(f"  - {version_name} ({status})", file=sys.stderr)
 
         print("", file=sys.stderr)
@@ -345,6 +351,13 @@ try:
         print(f"INFO: Version $version exists but has no os_matrix - skipping build", file=sys.stderr)
         print("This version is intentionally disabled/skipped in the configuration.", file=sys.stderr)
         sys.exit(0)  # Exit successfully but with no builds
+
+    if version_data.get('deprecated_at'):
+        # Version is deprecated - kept in YAML for history but not built
+        print(f"INFO: Version $version is deprecated since {version_data['deprecated_at']} - skipping build", file=sys.stderr)
+        if version_data.get('superseded_by'):
+            print(f"This version was superseded by {version_data['superseded_by']}.", file=sys.stderr)
+        sys.exit(0)
 
     # Version has os_matrix - proceed with builds
     log_debug(f"Using custom OS matrix for version $version")

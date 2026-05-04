@@ -30,27 +30,62 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Python dependencies
+        run: pip install pyyaml
+
       - name: Extract new versions
         id: extract-versions
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "🔍 Detecting new Asterisk versions in PR..."
-            # Fetch base branch for comparison
             git fetch origin ${{ github.base_ref }}
             COMPARE_REF="origin/${{ github.base_ref }}"
           else
             echo "🔍 Detecting new Asterisk versions in push to main..."
-            # Compare with previous commit
             COMPARE_REF="HEAD^"
           fi
 
-          # Get diff of supported-asterisk-builds.yml
-          NEW_VERSIONS=$(git diff $COMPARE_REF...HEAD -- asterisk/supported-asterisk-builds.yml | \
-            grep '^+.*version:' | \
-            sed 's/^+.*version: *"\([^"]*\)".*/\1/' | \
-            grep -v '^$' | \
-            tr '\n' ' ' | \
-            sed 's/ $//')
+          # Compare YAML structurally: a version is "new" if it is active
+          # (has os_matrix, no deprecated_at) at HEAD but was not active at
+          # COMPARE_REF. This is robust against comment-out style edits and
+          # other text-level diff noise.
+          BASE_YAML=$(git show "$COMPARE_REF:asterisk/supported-asterisk-builds.yml" 2>/dev/null || echo "")
+          HEAD_YAML=$(cat asterisk/supported-asterisk-builds.yml)
+
+          NEW_VERSIONS=$(BASE_YAML="$BASE_YAML" HEAD_YAML="$HEAD_YAML" python3 - <<'PY'
+          import os, sys, yaml
+
+          def active_versions(text):
+              if not text:
+                  return set()
+              try:
+                  data = yaml.safe_load(text) or {}
+              except yaml.YAMLError as e:
+                  print(f"⚠️  Failed to parse YAML: {e}", file=sys.stderr)
+                  return set()
+              out = set()
+              for build in data.get('latest_builds', []) or []:
+                  version = build.get('version')
+                  if not version:
+                      continue
+                  if 'os_matrix' not in build:
+                      continue
+                  if build.get('deprecated_at'):
+                      continue
+                  out.add(version)
+              return out
+
+          base = active_versions(os.environ.get('BASE_YAML', ''))
+          head = active_versions(os.environ.get('HEAD_YAML', ''))
+          new = sorted(head - base)
+          print(' '.join(new))
+          PY
+          )
 
           if [ -z "$NEW_VERSIONS" ]; then
             echo "has_new_versions=false" >> $GITHUB_OUTPUT
@@ -137,6 +172,10 @@ jobs:
 
                   if 'os_matrix' not in build:
                       print(f'⏭️  Skipping {version} (no os_matrix - disabled)', file=sys.stderr)
+                      continue
+
+                  if build.get('deprecated_at'):
+                      print(f'⏭️  Skipping {version} (deprecated since {build[\"deprecated_at\"]})', file=sys.stderr)
                       continue
 
                   os_matrix = build['os_matrix']

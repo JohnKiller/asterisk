@@ -36,10 +36,16 @@ jobs:
           for build in data.get('latest_builds', []):
               version = build.get('version')
               os_matrix = build.get('os_matrix')
+              deprecated_at = build.get('deprecated_at')
 
               # Skip intentionally disabled versions
               if not os_matrix:
                   print(f"⏭️  Skipping {version} (intentionally disabled)")
+                  continue
+
+              # Skip deprecated versions (kept in YAML for history)
+              if deprecated_at:
+                  print(f"⏭️  Skipping {version} (deprecated since {deprecated_at})")
                   continue
 
               for os_config in os_matrix:
