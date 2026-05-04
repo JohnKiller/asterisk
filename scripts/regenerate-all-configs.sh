@@ -103,7 +103,7 @@ try:
     versions = []
     for build in data['latest_builds']:
         version = build.get('version', 'unknown')
-        if 'os_matrix' in build:
+        if 'os_matrix' in build and not build.get('deprecated_at'):
             versions.append(version)
 
     for version in versions:

@@ -34,6 +34,14 @@ log "Using $JOBS parallel jobs for compilation (detected $NPROC CPUs)"
 log "Configuring Asterisk with options..."
 ./configure --with-pjproject-bundled --with-ssl=ssl --with-crypto
 
+# Workaround: Asterisk 18.x ships makeopts with a literal '\n' in DOWNLOAD
+# that dash echo interprets as a real newline, mangling
+# get_sourceable_makeopts output and breaking make_xml_documentation. Flatten
+# the line to a plain curl invocation. No-op on versions without the bug.
+if [ -f makeopts ]; then
+    sed -i 's|^DOWNLOAD=.*|DOWNLOAD=/usr/bin/curl -L -O --progress-bar|' makeopts
+fi
+
 # Build menuselect tool
 log "Building menuselect tool..."
 make menuselect
@@ -90,6 +98,11 @@ menuselect/menuselect --disable chan_sip menuselect.makeopts || warn "Module not
 
 log "Module configuration completed"
 
+
+# Pre-build third-party (pjproject) sequentially with verbose output.
+# This surfaces real compiler errors that would otherwise be hidden by parallel make.
+log "Building third-party dependencies (pjproject) with verbose output..."
+TMPDIR=${TMPDIR} make NOISY_BUILD=yes -j 1 third-party
 
 # Build Asterisk
 log "Building Asterisk core (this may take several minutes)..."

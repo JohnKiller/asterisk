@@ -46,7 +46,7 @@ asterisk:
     major_version: 23
   source:
     url_template: https://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-{version}.tar.gz
-    git_sha: 46a8521
+    git_sha: f616aff
     git_ref: master
   source_type: git
 base:

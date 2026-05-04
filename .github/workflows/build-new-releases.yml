@@ -30,27 +30,62 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Python dependencies
+        run: pip install pyyaml
+
       - name: Extract new versions
         id: extract-versions
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "🔍 Detecting new Asterisk versions in PR..."
-            # Fetch base branch for comparison
             git fetch origin ${{ github.base_ref }}
             COMPARE_REF="origin/${{ github.base_ref }}"
           else
             echo "🔍 Detecting new Asterisk versions in push to main..."
-            # Compare with previous commit
             COMPARE_REF="HEAD^"
           fi
 
-          # Get diff of supported-asterisk-builds.yml
-          NEW_VERSIONS=$(git diff $COMPARE_REF...HEAD -- asterisk/supported-asterisk-builds.yml | \
-            grep '^+.*version:' | \
-            sed 's/^+.*version: *"\([^"]*\)".*/\1/' | \
-            grep -v '^$' | \
-            tr '\n' ' ' | \
-            sed 's/ $//')
+          # Compare YAML structurally: a version is "new" if it is active
+          # (has os_matrix, no deprecated_at) at HEAD but was not active at
+          # COMPARE_REF. This is robust against comment-out style edits and
+          # other text-level diff noise.
+          BASE_YAML=$(git show "$COMPARE_REF:asterisk/supported-asterisk-builds.yml" 2>/dev/null || echo "")
+          HEAD_YAML=$(cat asterisk/supported-asterisk-builds.yml)
+
+          NEW_VERSIONS=$(BASE_YAML="$BASE_YAML" HEAD_YAML="$HEAD_YAML" python3 - <<'PY'
+          import os, sys, yaml
+
+          def active_versions(text):
+              if not text:
+                  return set()
+              try:
+                  data = yaml.safe_load(text) or {}
+              except yaml.YAMLError as e:
+                  print(f"⚠️  Failed to parse YAML: {e}", file=sys.stderr)
+                  return set()
+              out = set()
+              for build in data.get('latest_builds', []) or []:
+                  version = build.get('version')
+                  if not version:
+                      continue
+                  if 'os_matrix' not in build:
+                      continue
+                  if build.get('deprecated_at'):
+                      continue
+                  out.add(version)
+              return out
+
+          base = active_versions(os.environ.get('BASE_YAML', ''))
+          head = active_versions(os.environ.get('HEAD_YAML', ''))
+          new = sorted(head - base)
+          print(' '.join(new))
+          PY
+          )
 
           if [ -z "$NEW_VERSIONS" ]; then
             echo "has_new_versions=false" >> $GITHUB_OUTPUT
@@ -137,6 +172,10 @@ jobs:
 
                   if 'os_matrix' not in build:
                       print(f'⏭️  Skipping {version} (no os_matrix - disabled)', file=sys.stderr)
+                      continue
+
+                  if build.get('deprecated_at'):
+                      print(f'⏭️  Skipping {version} (deprecated since {build[\"deprecated_at\"]})', file=sys.stderr)
                       continue
 
                   os_matrix = build['os_matrix']
@@ -249,57 +288,8 @@ jobs:
 
   announce-releases:
     needs: [detect-new-releases, prepare-matrix, build-matrix]
-    runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.detect-new-releases.outputs.has_new_versions == 'true' && needs.build-matrix.result == 'success'
-
-    steps:
-      - name: Prepare announcement message
-        id: message
-        run: |
-          NEW_VERSIONS="${{ needs.detect-new-releases.outputs.new_versions }}"
-          VERSION_LIST=$(echo "$NEW_VERSIONS" | tr ' ' '\n' | sed 's/^/- /' | tr '\n' ' ')
-
-          MESSAGE="🎆 New Asterisk Docker Images Released!
-
-          Versions:
-          ${VERSION_LIST}
-
-          Available on:
-          - Docker Hub: docker.io/andrius/asterisk
-          - GitHub Container Registry: ghcr.io/andrius/asterisk
-
-          Pull with: docker pull andrius/asterisk:VERSION
-
-          GitHub: https://github.com/${{ github.repository }}
-          "
-
-          # Format for Telegram (escape special characters)
-          TELEGRAM_MESSAGE=$(echo "$MESSAGE" | sed 's/[_*[\]()~`>#+=|{}.!-]/\\&/g')
-
-          # Format for Mastodon (plain text)
-          MASTODON_MESSAGE="$MESSAGE"
-
-          echo "telegram_message<<EOF" >> $GITHUB_OUTPUT
-          echo "$TELEGRAM_MESSAGE" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          echo "mastodon_message<<EOF" >> $GITHUB_OUTPUT
-          echo "$MASTODON_MESSAGE" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Announce on Telegram
-        if: vars.TELEGRAM_CHAT_ID != ''
-        uses: appleboy/telegram-action@v1.0.0
-        with:
-          to: ${{ vars.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          message: ${{ steps.message.outputs.telegram_message }}
-          format: markdown
-
-      - name: Announce on Mastodon
-        if: vars.MASTODON_URL != ''
-        uses: cbrgm/mastodon-github-action@v2.1.8
-        with:
-          access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
-          url: ${{ vars.MASTODON_URL }}
-          message: ${{ steps.message.outputs.mastodon_message }}
+    uses: ./.github/workflows/announce-releases.yml
+    with:
+      versions: ${{ needs.detect-new-releases.outputs.new_versions }}
+    secrets: inherit

@@ -90,6 +90,10 @@ runs:
             if not version or 'os_matrix' not in build:
                 continue
 
+            # Skip deprecated versions (kept in YAML for history but not built)
+            if build.get('deprecated_at'):
+                continue
+
             # Apply version filters
             if filter_version:
                 # Exact version match takes precedence

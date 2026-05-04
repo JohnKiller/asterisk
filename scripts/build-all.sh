@@ -103,7 +103,7 @@ try:
         if not version:
             continue
 
-        if 'os_matrix' in build:
+        if 'os_matrix' in build and not build.get('deprecated_at'):
             buildable_versions.append(version)
         else:
             skipped_versions.append(version)
@@ -267,6 +267,9 @@ try:
             continue
 
         if 'os_matrix' not in build:
+            continue
+
+        if build.get('deprecated_at'):
             continue
 
         os_matrix = build['os_matrix']

@@ -57,8 +57,8 @@ def calculate_version_metrics(builds):
     Returns:
         dict with keys: total, oldest, latest, has_git
     """
-    # Filter enabled versions (those with os_matrix)
-    enabled = [b for b in builds if b.get('os_matrix')]
+    # Filter enabled versions (those with os_matrix and not deprecated)
+    enabled = [b for b in builds if b.get('os_matrix') and not b.get('deprecated_at')]
 
     # Separate git from versioned releases
     versioned = [b['version'] for b in enabled if b.get('version') != 'git']
@@ -171,6 +171,10 @@ def generate_version_table(builds):
         if not version:
             continue
 
+        # Skip deprecated entries (rendered separately)
+        if build.get('deprecated_at'):
+            continue
+
         # Get tags
         tags = build.get('additional_tags', '-')
 
@@ -218,6 +222,94 @@ def generate_version_table(builds):
         lines.append(f"| **{v['version']}** | {tags} | {v['distribution']} | {v['architectures']} |")
 
     return '\n'.join(lines)
+
+
+def generate_deprecated_table(builds):
+    """Generate markdown table of deprecated versions, newest deprecation first."""
+    deprecated = []
+    for build in builds:
+        version = build.get('version')
+        if not version or not build.get('deprecated_at'):
+            continue
+        deprecated.append({
+            'version': version,
+            'deprecated_at': build['deprecated_at'],
+            'superseded_by': build.get('superseded_by') or '-',
+        })
+
+    if not deprecated:
+        return None
+
+    # Sort by deprecated_at descending, then by version
+    deprecated.sort(
+        key=lambda d: (d['deprecated_at'], version_sort_key(d['version'])),
+        reverse=True,
+    )
+
+    lines = [
+        "| Version | Deprecated | Superseded by |",
+        "| ------- | ---------- | ------------- |",
+    ]
+    for d in deprecated:
+        # Render only the date portion of the ISO timestamp for compactness
+        date_only = d['deprecated_at'].split('T', 1)[0] if 'T' in d['deprecated_at'] else d['deprecated_at']
+        superseded = d['superseded_by']
+        if superseded != '-':
+            superseded = f"`{superseded}`"
+        lines.append(f"| **{d['version']}** | {date_only} | {superseded} |")
+
+    return '\n'.join(lines)
+
+
+def update_deprecated_section(readme_path, deprecated_table, dry_run=False):
+    """Replace or insert the '## Deprecated Versions' section in README.
+
+    The section is placed immediately after the '## Supported Versions' block.
+    If deprecated_table is None or empty, the section is removed.
+    """
+    try:
+        with open(readme_path, 'r') as f:
+            content = f.read()
+    except FileNotFoundError:
+        print(f"❌ ERROR: File not found: {readme_path}", file=sys.stderr)
+        return False
+
+    section_pattern = r'## Deprecated Versions\n\n.*?(?=\n## )'
+    intro_text = (
+        "These versions are no longer built but kept here for historical reference. "
+        "Existing images remain in the registries until manually pruned.\n\n"
+    )
+
+    if deprecated_table:
+        new_section = f"## Deprecated Versions\n\n{intro_text}{deprecated_table}\n\n"
+        if re.search(section_pattern, content, re.DOTALL):
+            updated = re.sub(section_pattern, new_section.rstrip() + '\n\n', content, count=1, flags=re.DOTALL)
+        else:
+            # Insert after the Supported Versions table (before next ##)
+            insert_pattern = r'(## Supported Versions\n\n.*?\n\n)(## )'
+            match = re.search(insert_pattern, content, re.DOTALL)
+            if not match:
+                print("⚠️  Could not find insertion point for deprecated section", file=sys.stderr)
+                return False
+            updated = content[:match.end(1)] + new_section + match.group(2) + content[match.end():]
+    else:
+        # Remove existing deprecated section if present
+        if not re.search(section_pattern, content, re.DOTALL):
+            return False
+        updated = re.sub(section_pattern, '', content, count=1, flags=re.DOTALL)
+
+    if dry_run:
+        print("🔍 DRY RUN - Deprecated section preview:")
+        if deprecated_table:
+            print(deprecated_table)
+        else:
+            print("(no deprecated versions, section would be removed if present)")
+        return False
+
+    with open(readme_path, 'w') as f:
+        f.write(updated)
+    print("✅ Updated Deprecated Versions section")
+    return True
 
 
 def update_readme(readme_path, new_table, dry_run=False):
@@ -293,7 +385,15 @@ def main():
     print(f"📝 Updating table in {readme_path}...")
     table_updated = update_readme(readme_path, table, dry_run)
 
-    if intro_updated or table_updated:
+    print("📊 Generating deprecated versions table...")
+    deprecated_table = generate_deprecated_table(builds)
+    if deprecated_table:
+        print(f"   Found deprecated versions, updating section in {readme_path}...")
+    else:
+        print("   No deprecated versions; removing section if present")
+    deprecated_updated = update_deprecated_section(readme_path, deprecated_table, dry_run)
+
+    if intro_updated or table_updated or deprecated_updated:
         print("\n✅ README.md updated successfully!")
     elif dry_run:
         print("\n💡 Run without --dry-run to apply changes")

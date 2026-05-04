@@ -138,15 +138,17 @@ latest_builds:
         architectures:
           - "amd64"
 
-  # Temporally disabled this version until I'd solve compilation issue
   - version: "18.9-cert17"
-    # additional_tags: "18-cert"
-    # os_matrix:
-    #   - os: "debian"
-    #     distribution: "buster"
-    #     architectures:
-    #       - "amd64"
-    #       - "arm64"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "18.9-cert18"
+    reason: "Compilation issue on buster, never resolved - replaced by 18.9-cert18 on trixie"
+    additional_tags: "18-cert"
+    os_matrix:
+      - os: "debian"
+        distribution: "buster"
+        architectures:
+          - "amd64"
+          - "arm64"
 
   - version: "18.26.4"
     additional_tags: "18"
@@ -164,79 +166,18 @@ latest_builds:
         architectures:
           - "amd64"
 
-  # - version: "20.7-cert7"
-  #   os_matrix:
-  #     - os: "debian"
-  #       distribution: "trixie"
-  #       architectures:
-  #         - "amd64"
+  - version: "20.7-cert7"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "20.7-cert10"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
 
-  # - version: "20.17.0"
-  #   os_matrix:
-  #     - os: "debian"
-  #       distribution: "trixie"
-  #       architectures:
-  #         - "amd64"
-  #         - "arm64"
-
-  # - version: "21.12.0"
-  #   os_matrix:
-  #     - os: "debian"
-  #       distribution: "trixie"
-  #       architectures:
-  #         - "amd64"
-  #         - "arm64"
-
-  # - version: "22.7.0"
-  #   os_matrix:
-  #     - os: "debian"
-  #       distribution: "trixie"
-  #       architectures:
-  #         - "amd64"
-  #         - "arm64"
-
-  # - version: "23.1.0"
-  #   os_matrix:
-  #     - os: "debian"
-  #       distribution: "trixie"
-  #       architectures:
-  #         - "amd64"
-  #         - "arm64"
-
-  # - version: "20.7-cert8"
-  #   os_matrix:
-  #     - os: "debian"
-  #       distribution: "trixie"
-  #       architectures:
-  #         - "amd64"
-  #         - "arm64"
-
-  # - version: "20.18.0"
-  #   os_matrix:
-  #     - os: "debian"
-  #       distribution: "trixie"
-  #       architectures:
-  #         - "amd64"
-  #         - "arm64"
-
-  # - version: "22.8.0"
-  #   os_matrix:
-  #     - os: "debian"
-  #       distribution: "trixie"
-  #       architectures:
-  #         - "amd64"
-  #         - "arm64"
-
-  # - version: "23.2.0"
-  #   os_matrix:
-  #     - os: "debian"
-  #       distribution: "trixie"
-  #       architectures:
-  #         - "amd64"
-  #         - "arm64"
-
-  - version: "20.18.2"
-    additional_tags: "20"
+  - version: "20.7-cert8"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "20.7-cert10"
     os_matrix:
       - os: "debian"
         distribution: "trixie"
@@ -245,6 +186,8 @@ latest_builds:
           - "arm64"
 
   - version: "20.7-cert9"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "20.7-cert10"
     additional_tags: "20-cert"
     os_matrix:
       - os: "debian"
@@ -253,7 +196,50 @@ latest_builds:
           - "amd64"
           - "arm64"
 
+  - version: "20.17.0"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "20.19.0"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
+          - "arm64"
+
+  - version: "20.18.0"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "20.19.0"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
+          - "arm64"
+
+  - version: "20.18.2"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "20.19.0"
+    additional_tags: "20"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
+          - "arm64"
+
+  - version: "21.12.0"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "21.12.2"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
+          - "arm64"
+
   - version: "21.12.1"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "21.12.2"
     additional_tags: "21"
     os_matrix:
       - os: "debian"
@@ -262,7 +248,29 @@ latest_builds:
           - "amd64"
           - "arm64"
 
+  - version: "22.7.0"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "22.9.0"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
+          - "arm64"
+
+  - version: "22.8.0"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "22.9.0"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
+          - "arm64"
+
   - version: "22.8.2"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "22.9.0"
     additional_tags: "latest,stable,22"
     os_matrix:
       - os: "debian"
@@ -271,7 +279,39 @@ latest_builds:
           - "amd64"
           - "arm64"
 
+  - version: "22.8-cert1"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "22.8-cert2"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
+          - "arm64"
+
+  - version: "23.1.0"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "23.3.0"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
+          - "arm64"
+
+  - version: "23.2.0"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "23.3.0"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
+          - "arm64"
+
   - version: "23.2.2"
+    deprecated_at: "2026-05-04T07:22:53Z"
+    superseded_by: "23.3.0"
     additional_tags: "23"
     os_matrix:
       - os: "debian"
@@ -280,15 +320,8 @@ latest_builds:
           - "amd64"
           - "arm64"
 
-  - version: "22.8-cert1"
-    os_matrix:
-      - os: "debian"
-        distribution: "trixie"
-        architectures:
-          - "amd64"
-          - "arm64"
-
   - version: "20.7-cert10"
+    additional_tags: "20-cert"
     os_matrix:
       - os: "debian"
         distribution: "trixie"
@@ -297,6 +330,7 @@ latest_builds:
           - "arm64"
 
   - version: "21.12.2"
+    additional_tags: "21"
     os_matrix:
       - os: "debian"
         distribution: "trixie"
@@ -305,6 +339,43 @@ latest_builds:
           - "arm64"
 
   - version: "22.8-cert2"
+    additional_tags: "22-cert"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
+          - "arm64"
+
+  - version: "18.9-cert18"
+    additional_tags: "18-cert"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
+          - "arm64"
+
+  - version: "20.19.0"
+    additional_tags: "20"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
+          - "arm64"
+
+  - version: "22.9.0"
+    additional_tags: "latest,stable,22"
+    os_matrix:
+      - os: "debian"
+        distribution: "trixie"
+        architectures:
+          - "amd64"
+          - "arm64"
+
+  - version: "23.3.0"
+    additional_tags: "23"
     os_matrix:
       - os: "debian"
         distribution: "trixie"
@@ -313,11 +384,11 @@ latest_builds:
           - "arm64"
 
 metadata:
-  generated_at: "2026-04-07T20:15:18Z"
+  generated_at: "2026-05-03T20:15:48Z"
   supported_os:
     debian: ["stretch", "jessie", "buster", "bullseye", "bookworm", "trixie"]
   supported_architectures: ["amd64", "arm64"]
   mode: "manual"
   git_support: true
-  git_sha: "590b490"
-  last_git_update: "2026-04-23T18:29:17Z"
+  git_sha: "f616aff"
+  last_git_update: "2026-04-30T18:34:16Z"
